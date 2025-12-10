@@ -20,7 +20,7 @@ def verify_api_key(key: str, key_hash: str) -> bool:
 def generate_api_key() -> str:
     """Generate a new API key."""
     random_part = secrets.token_urlsafe(32)
-    return f"sk_live_{random_part}"
+    return f"wsk_{random_part}"  # wsk = wallet service key
 
 
 def create_jwt(user_id: str, email: str, expires_in_hours: int = None) -> str:
