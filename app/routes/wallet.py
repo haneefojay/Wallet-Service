@@ -50,13 +50,6 @@ async def deposit(
 ):
     """
     Initiate a wallet deposit using Paystack.
-    
-    Args:
-        payload: DepositRequest with amount
-        session: Database session
-    
-    Returns:
-        DepositResponse with authorization_url and reference
     """
     # Check permission if API key
     if request.headers.get("x-api-key"):
@@ -110,13 +103,6 @@ async def deposit_status(
     
     Note: This endpoint does NOT credit wallets. Only webhooks credit wallets.
     Requires authentication to prevent information disclosure.
-    
-    Args:
-        reference: Paystack reference
-        session: Database session
-    
-    Returns:
-        DepositStatusResponse with status and amount
     """
     # Authenticate user
     auth_context = await get_authenticated_user(request)
@@ -153,12 +139,7 @@ async def get_balance(
     Get wallet balance.
     
     Auth: JWT or API key with "read" permission
-    
-    Args:
-        session: Database session
-    
-    Returns:
-        BalanceResponse with balance
+
     """
     # Check permission if API key
     if request.headers.get("x-api-key"):
@@ -189,13 +170,6 @@ async def transfer(
     Transfer funds to another wallet.
     
     Auth: JWT or API key with "transfer" permission
-    
-    Args:
-        payload: TransferRequest with wallet_number and amount
-        session: Database session
-    
-    Returns:
-        TransferResponse with status and transaction_id
     """
     # Check permission if API key
     if request.headers.get("x-api-key"):
@@ -232,14 +206,6 @@ async def get_transactions(
     Get transaction history for the user.
     
     Auth: JWT or API key with "read" permission
-    
-    Args:
-        limit: Number of transactions to return (max 100)
-        offset: Number of transactions to skip
-        session: Database session
-    
-    Returns:
-        TransactionHistoryResponse with list of transactions
     """
     # Check permission if API key
     if request.headers.get("x-api-key"):

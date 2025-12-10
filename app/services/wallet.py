@@ -198,8 +198,7 @@ async def transfer_funds(
         session=session,
     )
     
-    # Record transaction for RECIPIENT (incoming transfer)
-    # Get recipient user
+
     result = await session.execute(
         select(User).where(User.id == recipient_wallet.user_id)
     )
@@ -211,8 +210,8 @@ async def transfer_funds(
         transaction_type=TransactionType.TRANSFER,
         amount=amount,
         status=TransactionStatus.SUCCESS,
-        reference=f"{transfer_reference}_in",  # Unique reference for recipient
-        recipient_wallet_id=sender_wallet.id,  # From sender
+        reference=f"{transfer_reference}_in",  
+        recipient_wallet_id=sender_wallet.id,  
         description=f"Transfer from wallet {sender_wallet.wallet_number}",
         session=session,
     )

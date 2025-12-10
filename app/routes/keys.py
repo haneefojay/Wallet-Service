@@ -32,13 +32,6 @@ async def create_key(
 ):
     """
     Create a new API key.
-    
-    Args:
-        payload: CreateAPIKeyRequest with name, permissions, and expiry
-        session: Database session
-    
-    Returns:
-        CreateAPIKeyResponse with the new API key (shown only once)
     """
     auth_context = await get_authenticated_user(request)
     
@@ -68,13 +61,6 @@ async def rollover_key(
 ):
     """
     Rollover an expired API key.
-    
-    Args:
-        payload: RolloverAPIKeyRequest with expired_key_id and new expiry
-        session: Database session
-    
-    Returns:
-        RolloverAPIKeyResponse with the new API key
     """
     auth_context = await get_authenticated_user(request)
     
@@ -101,12 +87,6 @@ async def list_keys(
 ):
     """
     List all API keys for the user.
-    
-    Args:
-        session: Database session
-    
-    Returns:
-        APIKeyListResponse with list of keys
     """
     auth_context = await get_authenticated_user(request)
     
@@ -130,13 +110,6 @@ async def revoke_key(
 ):
     """
     Revoke an API key.
-    
-    Args:
-        key_id: ID of the key to revoke
-        session: Database session
-    
-    Returns:
-        Success message
     """
     auth_context = await get_authenticated_user(request)
     

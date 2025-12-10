@@ -26,11 +26,6 @@ async def paystack_webhook(request: Request):
     - Credit wallet on successful payment
     - Handle idempotently (no double-credit)
     
-    Args:
-        request: FastAPI Request
-    
-    Returns:
-        {"status": true}
     """
     # Get raw body for signature verification
     body = await request.body()

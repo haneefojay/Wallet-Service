@@ -86,14 +86,6 @@ async def google_callback(
 ):
     """
     Handle Google OAuth callback.
-    
-    Args:
-        code: Authorization code from Google
-        state: State parameter for CSRF protection
-        session: Database session
-    
-    Returns:
-        AuthToken with JWT
     """
     try:
         # Exchange code for tokens
