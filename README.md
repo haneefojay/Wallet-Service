@@ -34,8 +34,6 @@ wallet-service/
 │   │   └── database.py   # SQLAlchemy setup
 │   ├── models/           # Database models
 │   │   └── __init__.py   # User, Wallet, Transaction, APIKey, WebhookLog
-│   ├── schemas/          # Pydantic schemas
-│   │   └── __init__.py   # Request/Response models
 │   ├── routes/           # API endpoints
 │   │   ├── auth.py       # Google OAuth & JWT
 │   │   ├── keys.py       # API key management
@@ -52,7 +50,11 @@ wallet-service/
 │   ├── middleware/       # Request middleware
 │   │   └── auth.py       # Authentication middleware
 │   └── main.py           # FastAPI app initialization
-├── main.py               # Entry point
+│   ├── schemas           # Request/Response models
+│   ├── utils             # Utilities
+│   │   ├── security.py   # JWT, API key hashing, expiry parsing
+│   │   ├── paystack.py   # Webhook signature verification
+│   │   └── exceptions.py # Custom exceptions
 ├── requirements.txt      # Python dependencies
 ├── .env.example          # Environment variables template
 └── README.md             # This file
@@ -62,14 +64,14 @@ wallet-service/
 
 ### 1. Prerequisites
 
-- Python 3.10+
+- Python 3.11+
 - PostgreSQL 12+
 - pip
 
 ### 2. Create Virtual Environment
 
 ```bash
-cd wallet-service
+git clone <repository-url> && cd wallet-service
 python -m venv venv
 
 # On Windows

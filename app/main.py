@@ -49,7 +49,6 @@ app = FastAPI(
     },
 )
 
-# Configure security schemes for Swagger UI
 from fastapi.openapi.utils import get_openapi
 
 def custom_openapi():
@@ -69,13 +68,13 @@ def custom_openapi():
             "type": "http",
             "scheme": "bearer",
             "bearerFormat": "JWT",
-            "description": "Enter your JWT token from /auth/google/callback"
+            "description": "Enter your JWT token"
         },
         "APIKeyHeader": {
             "type": "apiKey",
             "in": "header",
             "name": "x-api-key",
-            "description": "Enter your API key from /keys/create"
+            "description": "Enter your API key"
         }
     }
     
