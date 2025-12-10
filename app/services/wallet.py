@@ -23,6 +23,7 @@ from typing import List, Optional
 from uuid import UUID
 import secrets
 import string
+import uuid
 
 
 async def get_or_create_wallet(user: User, session: AsyncSession) -> Wallet:
@@ -182,7 +183,6 @@ async def transfer_funds(
     
     
     # Generate unique reference for this transfer
-    import uuid
     transfer_reference = f"transfer_{uuid.uuid4().hex[:12]}"
     
     # Record transaction for SENDER (outgoing transfer)
@@ -192,7 +192,7 @@ async def transfer_funds(
         transaction_type=TransactionType.TRANSFER,
         amount=amount,
         status=TransactionStatus.SUCCESS,
-        reference=transfer_reference,
+        reference=f"{transfer_reference}_out",
         recipient_wallet_id=recipient_wallet.id,
         description=f"Transfer to wallet {recipient_wallet_number}",
         session=session,
@@ -211,8 +211,8 @@ async def transfer_funds(
         transaction_type=TransactionType.TRANSFER,
         amount=amount,
         status=TransactionStatus.SUCCESS,
-        reference=transfer_reference,
-        recipient_wallet_id=sender_wallet.id,
+        reference=f"{transfer_reference}_in",  # Unique reference for recipient
+        recipient_wallet_id=sender_wallet.id,  # From sender
         description=f"Transfer from wallet {sender_wallet.wallet_number}",
         session=session,
     )
