@@ -76,6 +76,26 @@ async def paystack_webhook(request: Request):
                 # Get the transaction
                 transaction = await get_transaction_by_reference(reference, session)
                 
+                # Check if transaction exists
+                if not transaction:
+                    logger.error(f"Transaction not found for reference: {reference}")
+                    return {"status": True}  # Return true to stop retries for invalid reference
+                
+                # Verify amount paid (Paystack sends Kobo, we store Naira)
+                expected_kobo = int(transaction.amount * 100)
+                if amount != expected_kobo:
+                    logger.warning(
+                        "Amount mismatch in webhook",
+                        extra={
+                            "paystack_amount": amount,
+                            "expected_kobo": expected_kobo,
+                            "reference": reference
+                        }
+                    )
+                    # We could update the transaction with the actual amount paid here if needed
+                    # For strict mode, we might want to flag this. 
+                    # For now, we proceed but log the warning.
+                
                 # Credit wallet
                 await credit_wallet(transaction.id, session)
                 
