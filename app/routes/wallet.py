@@ -95,7 +95,7 @@ async def deposit(
     )
 
 
-@router.get("/deposit/{reference}/status", response_model=DepositStatusResponse)
+@router.get("/deposit/{reference}/status", response_model=DepositStatusResponse, dependencies=[Depends(security)])
 async def deposit_status(
     request: Request,
     reference: str,
