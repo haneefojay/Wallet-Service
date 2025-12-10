@@ -46,6 +46,8 @@ async def get_or_create_wallet(user: User, session: AsyncSession) -> Wallet:
     )
     session.add(wallet)
     await session.flush()
+    await session.commit() 
+    await session.refresh(wallet) 
     return wallet
 
 
