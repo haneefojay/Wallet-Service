@@ -180,8 +180,8 @@ async def transfer_funds(
     sender_wallet.updated_at = datetime.utcnow()
     recipient_wallet.updated_at = datetime.utcnow()
     
-    # Record transaction
-    transaction = await create_transaction(
+    # Record transaction for SENDER (outgoing transfer)
+    sender_transaction = await create_transaction(
         user_id=sender_user.id,
         wallet_id=sender_wallet.id,
         transaction_type=TransactionType.TRANSFER,
@@ -192,8 +192,26 @@ async def transfer_funds(
         session=session,
     )
     
+    # Record transaction for RECIPIENT (incoming transfer)
+    # Get recipient user
+    result = await session.execute(
+        select(User).where(User.id == recipient_wallet.user_id)
+    )
+    recipient_user = result.scalar_one()
+    
+    recipient_transaction = await create_transaction(
+        user_id=recipient_user.id,
+        wallet_id=recipient_wallet.id,
+        transaction_type=TransactionType.TRANSFER,
+        amount=amount,
+        status=TransactionStatus.SUCCESS,
+        recipient_wallet_id=sender_wallet.id,  # From sender
+        description=f"Transfer from wallet {sender_wallet.wallet_number}",
+        session=session,
+    )
+    
     await session.flush()
-    return transaction
+    return sender_transaction
 
 
 # ============== API Key Management ==============
