@@ -171,8 +171,8 @@ async def get_balance(
     await session.refresh(wallet)
     
     return BalanceResponse(
+        wallet_number=wallet.wallet_number,
         balance=wallet.balance,
-        currency=wallet.currency,
     )
 
 

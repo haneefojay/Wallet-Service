@@ -57,8 +57,8 @@ class WalletResponse(BaseModel):
 
 
 class BalanceResponse(BaseModel):
+    wallet_number: str
     balance: float
-    currency: str = "NGN"
 
 
 # ============== Transaction Schemas ==============
