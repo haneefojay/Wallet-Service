@@ -31,11 +31,23 @@ async def paystack_webhook(request: Request):
     body = await request.body()
     signature = request.headers.get("x-paystack-signature")
     
+    if not signature:
+        logger.warning("Missing Paystack signature header")
+        return {"status": False, "message": "Missing signature"}
+        
     # Verify signature
-    verify_paystack_webhook(body, signature)
+    try:
+        verify_paystack_webhook(body, signature)
+    except Exception as e:
+        logger.warning(f"Signature verification failed: {e}")
+        return {"status": False, "message": "Invalid signature"}
     
     # Parse JSON
-    payload = json.loads(body)
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError:
+        logger.warning("Invalid JSON in webhook body")
+        return {"status": False, "message": "Invalid JSON"}
     
     # Get event and data
     event = payload.get("event")
