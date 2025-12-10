@@ -180,6 +180,11 @@ async def transfer_funds(
     sender_wallet.updated_at = datetime.utcnow()
     recipient_wallet.updated_at = datetime.utcnow()
     
+    
+    # Generate unique reference for this transfer
+    import uuid
+    transfer_reference = f"transfer_{uuid.uuid4().hex[:12]}"
+    
     # Record transaction for SENDER (outgoing transfer)
     sender_transaction = await create_transaction(
         user_id=sender_user.id,
@@ -187,6 +192,7 @@ async def transfer_funds(
         transaction_type=TransactionType.TRANSFER,
         amount=amount,
         status=TransactionStatus.SUCCESS,
+        reference=transfer_reference,
         recipient_wallet_id=recipient_wallet.id,
         description=f"Transfer to wallet {recipient_wallet_number}",
         session=session,
@@ -205,7 +211,8 @@ async def transfer_funds(
         transaction_type=TransactionType.TRANSFER,
         amount=amount,
         status=TransactionStatus.SUCCESS,
-        recipient_wallet_id=sender_wallet.id,  # From sender
+        reference=transfer_reference,
+        recipient_wallet_id=sender_wallet.id,
         description=f"Transfer from wallet {sender_wallet.wallet_number}",
         session=session,
     )
