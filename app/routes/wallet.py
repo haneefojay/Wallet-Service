@@ -5,8 +5,8 @@ from sqlalchemy import select
 from app.config.database import get_db
 from app.middleware.auth import get_authenticated_user
 
-# Security schemes
-security = HTTPBearer()
+# Security schemes (optional - auto_error=False allows API key auth)
+security = HTTPBearer(auto_error=False)
 api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
 from app.services.wallet import (
     get_or_create_wallet,
@@ -39,12 +39,14 @@ router = APIRouter(prefix="/wallet", tags=["wallet"])
 limiter = Limiter(key_func=get_remote_address)
 
 
-@router.post("/deposit", response_model=DepositResponse, dependencies=[Depends(security)])
+@router.post("/deposit", response_model=DepositResponse)
 @limiter.limit("10/minute")  # Max 10 deposits per minute per IP
 async def deposit(
     request: Request,
     payload: DepositRequest,
     session: AsyncSession = Depends(get_db),
+    token: str = Depends(security),
+    api_key: str = Depends(api_key_header),
 ):
     """
     Initiate a wallet deposit using Paystack.
@@ -95,11 +97,13 @@ async def deposit(
     )
 
 
-@router.get("/deposit/{reference}/status", response_model=DepositStatusResponse, dependencies=[Depends(security)])
+@router.get("/deposit/{reference}/status", response_model=DepositStatusResponse)
 async def deposit_status(
     request: Request,
     reference: str,
     session: AsyncSession = Depends(get_db),
+    token: str = Depends(security),
+    api_key: str = Depends(api_key_header),
 ):
     """
     Get the status of a deposit transaction.
@@ -138,10 +142,12 @@ async def deposit_status(
     )
 
 
-@router.get("/balance", response_model=BalanceResponse, dependencies=[Depends(security)])
+@router.get("/balance", response_model=BalanceResponse)
 async def get_balance(
     request: Request,
     session: AsyncSession = Depends(get_db),
+    token: str = Depends(security),
+    api_key: str = Depends(api_key_header),
 ):
     """
     Get wallet balance.
@@ -170,12 +176,14 @@ async def get_balance(
     )
 
 
-@router.post("/transfer", response_model=TransferResponse, dependencies=[Depends(security)])
+@router.post("/transfer", response_model=TransferResponse)
 @limiter.limit("20/minute")  # Max 20 transfers per minute per IP
 async def transfer(
     request: Request,
     payload: TransferRequest,
     session: AsyncSession = Depends(get_db),
+    token: str = Depends(security),
+    api_key: str = Depends(api_key_header),
 ):
     """
     Transfer funds to another wallet.
@@ -211,12 +219,14 @@ async def transfer(
     )
 
 
-@router.get("/transactions", response_model=TransactionHistoryResponse, dependencies=[Depends(security)])
+@router.get("/transactions", response_model=TransactionHistoryResponse)
 async def get_transactions(
     request: Request,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     session: AsyncSession = Depends(get_db),
+    token: str = Depends(security),
+    api_key: str = Depends(api_key_header),
 ):
     """
     Get transaction history for the user.

@@ -4,8 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config.database import get_db
 from app.middleware.auth import get_authenticated_user
 
-# Security scheme
-security = HTTPBearer()
+# Security scheme (optional - auto_error=False for better error handling)
+security = HTTPBearer(auto_error=False)
 from app.services.wallet import (
     create_api_key,
     rollover_api_key,
@@ -23,11 +23,12 @@ from app.schemas import (
 router = APIRouter(prefix="/keys", tags=["api-keys"])
 
 
-@router.post("/create", response_model=CreateAPIKeyResponse, dependencies=[Depends(security)])
+@router.post("/create", response_model=CreateAPIKeyResponse)
 async def create_key(
     request: Request,
     payload: CreateAPIKeyRequest,
     session: AsyncSession = Depends(get_db),
+    token: str = Depends(security),
 ):
     """
     Create a new API key.
@@ -58,11 +59,12 @@ async def create_key(
     )
 
 
-@router.post("/rollover", response_model=RolloverAPIKeyResponse, dependencies=[Depends(security)])
+@router.post("/rollover", response_model=RolloverAPIKeyResponse)
 async def rollover_key(
     request: Request,
     payload: RolloverAPIKeyRequest,
     session: AsyncSession = Depends(get_db),
+    token: str = Depends(security),
 ):
     """
     Rollover an expired API key.
@@ -91,10 +93,11 @@ async def rollover_key(
     )
 
 
-@router.get("/list", response_model=APIKeyListResponse, dependencies=[Depends(security)])
+@router.get("/list", response_model=APIKeyListResponse)
 async def list_keys(
     request: Request,
     session: AsyncSession = Depends(get_db),
+    token: str = Depends(security),
 ):
     """
     List all API keys for the user.
@@ -118,11 +121,12 @@ async def list_keys(
     )
 
 
-@router.post("/revoke/{key_id}", dependencies=[Depends(security)])
+@router.post("/revoke/{key_id}")
 async def revoke_key(
     request: Request,
     key_id: str,
     session: AsyncSession = Depends(get_db),
+    token: str = Depends(security),
 ):
     """
     Revoke an API key.

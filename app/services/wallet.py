@@ -18,7 +18,7 @@ from app.utils.exceptions import (
 )
 from app.utils.security import generate_api_key, hash_api_key, parse_expiry
 from app.config.settings import settings
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 from uuid import UUID
 import secrets
@@ -269,7 +269,7 @@ async def rollover_api_key(
     Args:
         user_id: User ID
         expired_key_id: ID of expired API key
-        new_expiry_str: New expiry string
+        new_expiry_str: New expiry string (1H, 1D, 1M, 1Y)
         session: AsyncSession
     
     Returns:

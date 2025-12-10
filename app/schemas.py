@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
@@ -133,7 +133,7 @@ class CreateAPIKeyResponse(BaseModel):
 
 class RolloverAPIKeyRequest(BaseModel):
     expired_key_id: UUID
-    expiry: str
+    expiry: str  # "1H", "1D", "1M", "1Y"
 
 
 class RolloverAPIKeyResponse(BaseModel):
