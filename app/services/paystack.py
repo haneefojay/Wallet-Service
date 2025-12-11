@@ -151,6 +151,37 @@ async def credit_wallet(
     return transaction
 
 
+async def update_transaction_status(
+    transaction_id: UUID,
+    status: TransactionStatus,
+    session: AsyncSession,
+) -> Transaction:
+    """
+    Update transaction status without crediting wallet.
+    
+    Args:
+        transaction_id: Transaction ID to update
+        status: New transaction status
+        session: AsyncSession
+    
+    Returns:
+        Updated Transaction object
+    """
+    result = await session.execute(
+        select(Transaction).where(Transaction.id == transaction_id)
+    )
+    transaction = result.scalar_one_or_none()
+    
+    if not transaction:
+        raise TransactionNotFoundException()
+        
+    transaction.status = status
+    transaction.updated_at = datetime.utcnow()
+    
+    await session.flush()
+    return transaction
+
+
 async def mark_webhook_processed(
     webhook_log_id: UUID,
     session: AsyncSession,
