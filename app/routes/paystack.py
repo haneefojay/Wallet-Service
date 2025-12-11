@@ -54,6 +54,9 @@ async def paystack_webhook(request: Request):
     amount = data.get("amount", 0)  # In kobo
     
     async with async_session() as session:
+        # Log all incoming events
+        logger.info(f"Received Paystack webhook: event={event} reference={reference}")
+
         webhook_log = await get_or_create_webhook_log(
             event=event,
             reference=reference,
