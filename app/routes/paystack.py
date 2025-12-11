@@ -8,6 +8,7 @@ from app.services.paystack import (
     credit_wallet,
     get_or_create_webhook_log,
     mark_webhook_processed,
+    update_transaction_status,
 )
 from app.models import TransactionStatus
 import json
@@ -27,7 +28,6 @@ async def paystack_webhook(request: Request):
     - Handle idempotently (no double-credit)
     
     """
-    # Get raw body for signature verification
     body = await request.body()
     signature = request.headers.get("x-paystack-signature")
     
@@ -35,21 +35,18 @@ async def paystack_webhook(request: Request):
         logger.warning("Missing Paystack signature header")
         return {"status": False, "message": "Missing signature"}
         
-    # Verify signature
     try:
         verify_paystack_webhook(body, signature)
     except Exception as e:
         logger.warning(f"Signature verification failed: {e}")
         return {"status": False, "message": "Invalid signature"}
     
-    # Parse JSON
     try:
         payload = json.loads(body)
     except json.JSONDecodeError:
         logger.warning("Invalid JSON in webhook body")
         return {"status": False, "message": "Invalid JSON"}
     
-    # Get event and data
     event = payload.get("event")
     data = payload.get("data", {})
     reference = data.get("reference")
@@ -57,7 +54,6 @@ async def paystack_webhook(request: Request):
     amount = data.get("amount", 0)  # In kobo
     
     async with async_session() as session:
-        # Create or get webhook log (idempotency)
         webhook_log = await get_or_create_webhook_log(
             event=event,
             reference=reference,
@@ -65,23 +61,18 @@ async def paystack_webhook(request: Request):
             session=session,
         )
         
-        # If already processed, return success (idempotency)
         if webhook_log.processed:
             await session.commit()
             return {"status": True}
         
-        # Only process charge.success events
         if event == "charge.success" and status_from_paystack == "success":
             try:
-                # Get the transaction
                 transaction = await get_transaction_by_reference(reference, session)
                 
-                # Check if transaction exists
                 if not transaction:
                     logger.error(f"Transaction not found for reference: {reference}")
-                    return {"status": True}  # Return true to stop retries for invalid reference
+                    return {"status": True}
                 
-                # Verify amount paid (Paystack sends Kobo, we store Naira)
                 expected_kobo = int(transaction.amount * 100)
                 if amount != expected_kobo:
                     logger.warning(
@@ -92,14 +83,9 @@ async def paystack_webhook(request: Request):
                             "reference": reference
                         }
                     )
-                    # We could update the transaction with the actual amount paid here if needed
-                    # For strict mode, we might want to flag this. 
-                    # For now, we proceed but log the warning.
                 
-                # Credit wallet
                 await credit_wallet(transaction.id, session)
                 
-                # Mark webhook as processed
                 webhook_log.transaction_id = transaction.id
                 webhook_log.processed = True
                 
@@ -114,20 +100,48 @@ async def paystack_webhook(request: Request):
                 )
                 
             except Exception as e:
-                logger.error(
-                    "Webhook processing failed",
-                    extra={
-                        "event": event,
-                        "reference": reference,
-                        "error": str(e),
-                    },
-                    exc_info=True
-                )
-                # Log error but still return 200 OK to prevent retries
+                logger.error(f"Webhook processing failed (success): {e}", exc_info=True)
                 webhook_log.processed = False
                 await session.rollback()
+
+        elif event == "charge.failed":
+            try:
+                transaction = await get_transaction_by_reference(reference, session)
+                if transaction:
+                    await update_transaction_status(transaction.id, TransactionStatus.FAILED, session)
+                    webhook_log.transaction_id = transaction.id
+                    logger.info(f"Transaction failed: {reference}")
+                
+                webhook_log.processed = True
+
+            except Exception as e:
+                logger.error(f"Webhook processing failed (failed): {e}", exc_info=True)
+                # We still mark as processed so we don't retry a failure notification endlessly if it's just a DB issue
+                # But typically we might want to retry. For now, let's allow retry if it crashes.
+                webhook_log.processed = False
+                await session.rollback()
+
+        elif event == "charge.pending":
+            # Just log it or update status to PENDING (if it wasn't already)
+            # Useful if a transaction was stuck in some other state or for logging visibility
+            try:
+                transaction = await get_transaction_by_reference(reference, session)
+                if transaction:
+                    # Optional: explicit update to PENDING if logic allows going back or confirming
+                    # Usually it starts as PENDING.
+                    await update_transaction_status(transaction.id, TransactionStatus.PENDING, session)
+                    webhook_log.transaction_id = transaction.id
+                    logger.info(f"Transaction pending: {reference}")
+                
+                webhook_log.processed = True
+                
+            except Exception as e:
+                logger.error(f"Webhook processing failed (pending): {e}", exc_info=True)
+                webhook_log.processed = False
+                await session.rollback()
+
         else:
-            # Mark as processed even if not charge.success
+            # Mark as processed even if not an event we care about deeply, so we don't ignore it forever if sent
             webhook_log.processed = True
         
         await session.commit()
