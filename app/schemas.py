@@ -68,8 +68,6 @@ class TransactionResponse(BaseModel):
     type: str
     amount: float
     status: str
-    reference: Optional[str]
-    description: Optional[str]
     created_at: datetime
     
     class Config:
